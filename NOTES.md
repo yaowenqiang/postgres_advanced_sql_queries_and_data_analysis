@@ -329,4 +329,31 @@ order by inventory_id asc nulls first ;
 select * from table1 
 cross join table2;
 
+select * from table1, table2;
+
+```
+
+# NATURAL join
+
++ Used to retrieve data from multiple tables using NATURAL JOIN clause
++ Creates an implicit join based on matching column names in the joined tables
++ Natural join can be an INNER JOIN ,LEFT JOIN,RIGHT JOIN, 
++ PostgreSQL will use the INNER JOIN by default
+
+```sql
+SELECT * 
+FROM table1 
+NATURAL JOIN table2;
+
+
+--下面三个查询的结果是一样的
+
+select * from customer natural join payment;
+
+select * from customer inner join  payment
+using (customer_id);
+
+select * from customer inner join  payment
+on customer.customer_id = payment.customer_id
+
 ```
