@@ -357,3 +357,74 @@ select * from customer inner join  payment
 on customer.customer_id = payment.customer_id
 
 ```
+
+# Aggregate Functions
+
++ Aggregate functions perform a calculation on a set of rows and return a single row
++ Can be used in SELECT, HAVING and GROUP BY clauses
+
+## Basic PostgreSQL Aggregate Functions 
+
++ avg() - return the average value
++ count() - return the number of values
++ max() - return the maximum value
++ min() - return the minimum value
++ sum() - return the sum of all of distinct values
+
+## Avg()
+
++ Used to calculate the average value of a numeric column
++ Widely used
++ Can be used in SELECT, GROUP BY and HAVING clauses
++ ignores NULL values
+
+```sql
+avg(column)
+
+select round(avg(replacement_cost), 2) avg_replacement_cost
+from film
+
+
+select customer.customer_id,
+       first_name,
+       last_name,
+       to_char(avg(amount), '9999999999999.99') as average_amount
+from payment
+         inner join customer on payment.customer_id = customer.customer_id
+group by customer.customer_id
+order by average_amount desc
+
+
+select customer.customer_id,
+       first_name,
+       last_name,
+       to_char(avg(amount), '9999999999999.99') as average_amount
+from payment
+         inner join customer on payment.customer_id = customer.customer_id
+group by customer.customer_id
+having
+    avg(amount) > 5
+order by average_amount desc
+
+
+```
+
+## Count 
+
++ Returns the number of rows that match a specific condition of a query
+
+```sql
+select count(*) from table_name;
+
+
+select count(*) drama_films
+from film
+inner join film_category using (film_id)
+inner join category using(category_id)
+where category_id = 7
+
+```
+
+
+
+
