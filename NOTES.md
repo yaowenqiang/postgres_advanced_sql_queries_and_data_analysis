@@ -423,8 +423,139 @@ inner join film_category using (film_id)
 inner join category using(category_id)
 where category_id = 7
 
+
+select count (distinct amount) from payment
+
+select customer_id,
+       count(customer_id)
+from payment
+group by customer_id
+
+select customer_id,
+       count(customer_id)
+from payment
+group by customer_id
+having count(customer_id) > 40;
+
+```
+
+## MAX()
+
++ Returns the maximum value in a set of values
+
+```sql
+MAX(expression)
+
+
+select max(film.replacement_cost) from film;
+
+
+select film_id, title
+from film
+where replacement_cost = (
+    select max(replacement_cost)
+    from film
+    )
+order by title
+
+select *
+from payment
+where amount = (
+    select
+        max(amount)
+    from payment
+    )
+
+select customer_id,
+       max(amount)
+from payment
+group by customer_id
+
+
+select customer_id,
+       max(amount)
+from payment
+group by customer_id
+having max(amount) > 10.99;
+
+
 ```
 
 
+
+## MIN()
+
++ Returns the minimum value in a set of values
+
+```sql
+MIN(expression)
+
+
+select min(film.replacement_cost) from film;
+
+
+select film_id, title
+from film
+where replacement_cost = (
+    select min(replacement_cost)
+    from film
+    )
+order by title
+
+select *
+from payment
+where amount = (
+    select
+        min(amount)
+    from payment
+    )
+
+select customer_id,
+       min(amount)
+from payment
+group by customer_id
+
+
+select customer_id,
+       min(amount)
+from payment
+group by customer_id
+having min(amount) > 10.99;
+
+
+```
+
+
+## SUM()
+
++ Returns the sum of values or distinct values
+
+```sql
+SUM(distinct column)
+
+select rating,
+       sum(rental_duration)
+from film
+group by rating
+order by rating
+
+select
+    customer_id,
+    sum(amount) as total
+from payment
+group by customer_id
+order by total desc
+limit 5;
+
+
+select
+    customer_id,
+    sum(amount) as total
+from payment
+group by customer_id
+having sum(amount) > 200
+order by total desc
+
+```
 
 
