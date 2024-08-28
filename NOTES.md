@@ -558,4 +558,54 @@ order by total desc
 
 ```
 
+# triggers
 
+## What is a Trigger
+
++ A PostgreSQL trigger is a function invoked automatically whenever an event associated with a table occurs
++ Event could be INSERT,UPDATE, DELTE or TRUNCATE
++ A trigger is a special user-defined function that binds a table
++ You can specify whether the trigger is invoked before or after an event
+
+## Types of Trigger
+
++ Row trigger
++ Statement trigger
+
+## Benefits of using trigger
+
++ Maintain data integrity rules
++ Check activities of applications accessing the databaes
+
+## Drawback of using triggers
+
++ Remember trigger exists
++ Understand it's logic
+
+
+## PostgreSQL Trigger Features
+
++ PostgreSQL fires trigger for the TRUNCATE event
++ PostgreSQL allows you to define statement-level trigger on views
++ PostgreSQL requires you to define a user-defined function as the action of the trigger
+
+## What you need to create PostgreSQL Trigger
+
++ Create a trigger function using CREATE FUNCTION statement
++ Bind this trigger function to a table using CREATE TRIGGER statement
+
+## Creating a trigger function syntax
+
++ A trigger function is similar to an ordinary function, except that it does not tabke any arguments and has return value type trigger
++ Once the trigger function is defined, you can bind it to specific action on a table,
+
+```sql
+CREATE FUNCTION trigger_function() RETURN trigger AS
+
+CREATE TRIGGER trigger_name{BEFORE|AFTER|INSTEAD OF}{event[OR...]}
+ON table_name
+[FOR[EACH]{ROW|STATEMENT}]
+EXECUTE PROCEDURE trigger_function
+
+
+```
