@@ -609,3 +609,31 @@ EXECUTE PROCEDURE trigger_function
 
 
 ```
+
+```sql
+CREATE FUNCTION public.log_last_name_change()
+    RETURNS trigger
+    LANGUAGE 'plpgsql'
+    COST 100
+AS
+$body$
+BEGIN
+    IF NEW.last_name <> OLD.last_name THEN
+        INSERT INTO employee_audits(employee_id, last_name, changed_on)
+        VALUES (OLD.id, OLD.last_name, NOW());
+    END IF;
+    RETURN new;
+END
+$body$;
+
+ALTER TABLE public.log_last_name_change() OWNER TO postgres;
+
+
+CREATE or REPLACE TRIGGER last_name_changes
+    BEFORE UPDATE
+    ON employees
+    FOR EACH ROW
+EXECUTE PROCEDURE log_last_name_change();
+
+
+```
