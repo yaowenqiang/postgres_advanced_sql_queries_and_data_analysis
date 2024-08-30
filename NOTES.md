@@ -700,7 +700,7 @@ drop trigger [if exists] trigger_name on table_name;
 + A View is a vrtual table
 + A view is a Logical table representing data from underlying tables
 + A view is defined based on ore or more tables known as base tables
-+ A view itself does not store data physically except for materialzied views
++ A view itself does not store data physically except for materializied views
 
 ## Benefits of Views
 
@@ -717,11 +717,120 @@ drop trigger [if exists] trigger_name on table_name;
 ```sql
 create view view_name as query;
 
+create view customer_master as
+SELECT cu.customer_id                                                 AS id,
+       (((cu.first_name)::text || ' '::text) || (cu.last_name)::text) AS name,
+       a.address,
+       a.postal_code                                                  AS "zip code",
+       a.phone,
+       city.city,
+       country.country,
+       CASE
+           WHEN cu.activebool THEN 'active'::text
+           ELSE ''::text
+           END                                                        AS notes,
+       cu.store_id                                                    AS sid
+FROM ((customer cu
+    JOIN address a ON ((cu.address_id = a.address_id)))
+    JOIN city ON ((a.city_id = city.city_id))
+    JOIN country ON ((city.country_id = country.country_id)));
+
 
 ```
 
 ### modifying
 
+```sql
+CREATE OR REPLACE view_name 
+AS query
+
+alter view view_name rename to new_view_name;
+
+```
+
 ### Removing
 
+```sql
+DROP VIEW [IF EXISTS] view_name
 
+```
+
+## PostgreSQL Updatable views
+
+### conditions
+
++ The defining query of the view must have exactly one entry in the FROM clause
++ The defining query must not contain one of the following clauses at top level: GROUP BY, HAVING, LIMIT OFFSET, DISTINCT, WITH UNION, INTERSECT, and EXCEPT
++ The selection list must not contain any window function or set-returning function or any aggregate function such as SUM, COUNT, AVG, MIN, MAX, etc
++ An Updatable view may contain both updatable and non-updatable columns
++ CHECK OPTION
++ Permission on view
+
+## Creating PostgreSQL Updatable Views
+
+```sql
+CREATE VIEW usa_cities AS
+SELECT city,
+       country_id
+FROM city
+WHERE country_id = 103;
+
+SELECT * from usa_cities
+
+insert into usa_cities (city, country_id) values ('San Jose', 103);
+DELETE from usa_cities WHERE city = 'San Jose';
+DELETE from usa_cities WHERE country_id = 104;
+
+
+```
+
+
+## Introduction To PostgreSQL materializied Views
+
+### What are PostgreSQL materializied Views
+
++ PostgreSQL materializied views that allow you to store result of a query physically and update the data periodically
++ A materialized view caches the result of a complex expensive query and then allow you to refresh this result periodically(周期性)
++ The materializied views are useful in many cases that require fast data access
++ Used in data warehouses ob business intelligent applications
+
+## Creating PostgreSQL materializied Views
+
+```sql
+CREATE MATERIALIZED VIEW view_name
+AS QUERY WITH [NO] DATA;
+
+REFRESH MATERIALIZED VIEW view_name;
+
+
+-- avoid table lock
+-- view must have a unique index
+REFRESH MATERIALIZED VIEW CONCURRENTLY view_name;
+
+DROP MATERIALIZED VIEW view_name;
+
+CREATE MATERIALIZED VIEW rental_by_category
+AS
+SELECT c.name        AS category,
+       SUM(p.amount) AS total_sales
+FROM ((((
+    (payment p JOIN rental r ON ((p.rental_id = r.rental_id)))
+        JOIN inventory i ON ((r.inventory_id = i.inventory_id)))
+    JOIN film f ON ((i.film_id = f.film_id)))
+    JOIN film_category fc ON ((f.film_id = fc.film_id)))
+    JOIN category c ON ((fc.category_id = c.category_id)))
+GROUP BY c.name
+ORDER BY SUM(p.amount) DESC
+WITH NO DATA;
+
+REFRESH MATERIALIZED VIEW rental_by_category;
+
+SELECT *
+FROM rental_by_category
+
+CREATE UNIQUE INDEX rental_category ON rental_by_category (category)
+
+REFRESH MATERIALIZED VIEW CONCURRENTLY rental_by_category;
+
+
+```
