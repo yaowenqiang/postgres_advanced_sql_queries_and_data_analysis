@@ -611,6 +611,24 @@ EXECUTE PROCEDURE trigger_function
 ```
 
 ```sql
+
+CREATE TABLE employees
+(
+    id         serial PRIMARY KEY,
+    first_name varchar(40) NOT NULL,
+    last_name  varchar(40) NOT NULL
+);
+
+CREATE TABLE employee_audits
+(
+    id          serial PRIMARY KEY,
+    employee_id int4         NOT NULL,
+    last_name   varchar(40)  NOT NULL,
+    changed_on  timestamp(6) NOT NULL
+);
+
+
+
 CREATE FUNCTION public.log_last_name_change()
     RETURNS trigger
     LANGUAGE 'plpgsql'
@@ -629,7 +647,7 @@ $body$;
 ALTER TABLE public.log_last_name_change() OWNER TO postgres;
 
 
-CREATE or REPLACE TRIGGER last_name_changes
+CREATE OR REPLACE TRIGGER last_name_changes
     BEFORE UPDATE
     ON employees
     FOR EACH ROW
@@ -637,3 +655,73 @@ EXECUTE PROCEDURE log_last_name_change();
 
 
 ```
+
+## Managing PostgreSQL Trigger
+
+
+```sql
+ALTER trigger trigger_name on table_name
+rename to new_name;
+
+```
+
+## MOdifying trigger
+
+```sql
+
+ALTER TABLE table_name
+rename to new_name;
+
+
+```
+
+## Disabling trigger
+
+```sql
+
+ALTER TABLE table_name
+DISABLE TRIGGER trigger_name | ALL;
+
+```
+
+## Removing trigger
+
+```sql
+
+drop trigger [if exists] trigger_name on table_name;
+
+```
+
+# Introduction to PostgreSQL Views
+
+## What's a View?
+
++ A view is a basicially a stored query(SELECT statement)
++ A View is a vrtual table
++ A view is a Logical table representing data from underlying tables
++ A view is defined based on ore or more tables known as base tables
++ A view itself does not store data physically except for materialzied views
+
+## Benefits of Views
+
++ Simplifies complex queries
++ Can help hide sensitie table data
++ You can grant permission to users
++ View provides consistent layer
+
+
+## Managing views
+
+### creating
+
+```sql
+create view view_name as query;
+
+
+```
+
+### modifying
+
+### Removing
+
+
