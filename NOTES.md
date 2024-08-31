@@ -833,4 +833,292 @@ CREATE UNIQUE INDEX rental_category ON rental_by_category (category)
 REFRESH MATERIALIZED VIEW CONCURRENTLY rental_by_category;
 
 
+
+```
+
+# Analytic(Window) Functions
+
+## What are Analytic(Window) Functions
+
++ Analytic functions compute an aggregate value based on a group of rows
++ Unlike aggregate functions,they can return multiple rows for each group
+
+
++ ROW_NUMBER()：为结果集中的每一行分配一个唯一的序号。
++ RANK() 和 DENSE_RANK()：根据指定的排序顺序为结果集中的每一行分配一个排名。RANK() 在遇到相同值时会留下排名间隙，而 DENSE_RANK() 则不会。
++ LEAD() 和 LAG()：查看当前行之后或之前的行的值。
++ SUM() OVER()：计算累计总和。
++ AVG() OVER()：计算移动平均数。
++ COUNT() OVER()：计算窗口内的行数。
++ FIRST_VALUE() 和 LAST_VALUE()：获取窗口内第一行或最后一行的值。
+
+```sql
+SELECT
+  column1,
+  column2,
+  window_function([arguments]) OVER (
+    [PARTITION BY expression1, ...]
+    [ORDER BY expression2 [ASC | DESC], ...]
+    [window_frame]
+  )
+FROM
+  table_name;
+```
+
+## Types of Analytic(window) Functions
+
++ ROW_NUMBER
++ RANK
++ DENSE_RANK functions
++ FIRST_VALUE
++ LAST_VALUE functions
++ LAG and LEAD functions
+
+## Using AVG as a Window Functions
+
+```sql
+CREATE TABLE product_groups
+(
+    group_id   serial PRIMARY KEY,
+    group_name varchar(255) NOT NULL
+);
+
+CREATE TABLE products
+(
+    product_id   serial PRIMARY KEY,
+    product_name varchar(255) NOT NULL,
+    price        decimal(11, 2),
+    group_id     int          NOT NULL,
+    FOREIGN KEY (group_id) REFERENCES product_groups (group_id)
+);
+
+INSERT INTO product_groups (group_name)
+VALUES ('Smartphone'),
+       ('Laptop'),
+       ('Tablet');
+
+INSERT INTO products (product_name, group_id, price)
+VALUES ('Microsoft Lumia', 1, 200),
+       ('HTC One', 1, 400),
+       ('Nexus', 1, 500),
+       ('IPhone', 1, 900),
+       ('HP ELite', 2, 1200),
+       ('Lenovo Thinkpad', 2, 700),
+       ('Sony VAIO', 2, 700),
+       ('Dell Vostro', 2, 800),
+       ('IPad', 3, 700),
+       ('Kindle Fire', 3, 150),
+       ('Sansung Glaxy Tab', 3, 200);
+
+SELECT *
+FROM products;
+SELECT *
+FROM product_groups;
+
+SELECT AVG(products.price)
+FROM products;
+
+SELECT product_name,
+       price,
+       group_name,
+       AVG(price) OVER (PARTITION BY group_name)
+FROM products
+         INNER JOIN product_groups USING (group_id);
+
+
+```
+
+## ROW_NUMBER() Functions
+
+```sql
+ROW_NUMBER() OVER (
+    [PARTITION BY column_1, column_2...]
+    [ORDER BY colum_3, column_4...]
+)
+
+SELECT product_name,
+       price,
+       group_name,
+       row_number() OVER (PARTITION BY group_name ORDER BY price)
+FROM products
+         INNER JOIN product_groups USING (group_id);
+
+SELECT product_name,
+       price,
+       group_name,
+       row_number() OVER ()
+FROM products
+         INNER JOIN product_groups USING (group_id);
+
+SELECT product_name,
+       price,
+       group_name,
+       row_number() OVER (PARTITION BY group_id ORDER BY product_name)
+FROM products
+         INNER JOIN product_groups USING (group_id);
+
+SELECT DISTINCT
+       price,
+       row_number() OVER (ORDER BY price)
+FROM products
+ORDER BY price
+
+SELECT *
+FROM products
+WHERE price = (SELECT price
+               FROM (SELECT price,
+                            ROW_NUMBER() OVER (ORDER BY price DESC) nth
+                     FROM (SELECT DISTINCT (price)
+                           FROM products) prices) sorted_prices
+               WHERE nth = 3)
+
+```
+## RANK() function
+
++ The RANK() function assigns ranking within an ordered partition
+
+
+
+```sql
+SELECT product_name,
+       group_name,
+       price,
+       RANK() OVER (
+           PARTITION BY group_name
+           ORDER BY price
+           )
+FROM products
+         INNER JOIN product_groups USING (group_id)
+
+
+```
+
+
+## DENSE_RANK() Function
+
++ The DENSE_RANK() function assigns ranking within an ordered partition, but the ranks are consecutive(连续的)
+
+```sql
+
+SELECT product_name,
+       group_name,
+       price,
+       DENSE_RANK() OVER (
+           PARTITION BY group_name
+           ORDER BY price
+           )
+FROM products
+         INNER JOIN product_groups USING (group_id)
+
+```
+
+## FIRST_VALUE() Function
+
++ The FIRST_VALUE() function returns the first value from the first row of the ordered set
+
+
+```sql
+
+SELECT product_name,
+       group_name,
+       price,
+       FIRST_VALUE(price) OVER (
+           PARTITION BY group_name
+           ORDER BY
+               price
+           ) AS lowest_price_per_group,
+
+       FIRST_VALUE(price) OVER (
+           PARTITION BY group_name
+           ORDER BY
+               price
+               DESC
+           ) AS highst_price_per_group
+FROM products
+         INNER JOIN product_groups USING (group_id)
+
+```
+
+
+## LAST_VALUE() Function
+
++ The LAST_VALUE() function returns the last value from the first row of the ordered set
+
+```sql
+SELECT product_name,
+       group_name,
+       price,
+       LAST_VALUE(price) OVER (
+           PARTITION BY group_name
+           ORDER BY
+               price RANGE BETWEEN UNBOUNDED PRECEDING
+               AND UNBOUNDED FOLLOWING
+           ) AS highest_price_per_group
+FROM products
+         INNER JOIN product_groups USING (group_id)
+
+SELECT product_name,
+       group_name,
+       price,
+       LAST_VALUE(price) OVER (
+           PARTITION BY group_name
+           ORDER BY
+               price
+           ) AS highest_price_per_group
+FROM products
+         INNER JOIN product_groups USING (group_id)
+
+```
+
+
+## LAG() function
+
++ The LAG() function has the ability to access data from the previous row
+
+```sql
+LAG(expression[offset][default])
+
+SELECT product_name,
+       group_name,
+       price,
+       LAG(price, 1) OVER (
+           PARTITION BY group_name
+           ORDER BY
+               price
+           ) AS pre_price,
+       price - LAG(price, 1) OVER (
+           PARTITION BY group_name
+           ORDER BY
+               price
+           ) AS cur_pre_diff
+FROM products
+         INNER JOIN product_groups USING (group_id)
+
+```
+
+## LEAD() Function
+
++ The LEAD() function has the ability to access data from the next row
+
+
+```sql
+LEAD(expression[offset][default])
+
+SELECT product_name,
+       group_name,
+       price,
+       LEAD( price, 1) OVER (
+           PARTITION BY group_name
+           ORDER BY
+               price
+           ) AS pre_price,
+       price - LEAD(price, 1) OVER (
+           PARTITION BY group_name
+           ORDER BY
+               price
+           ) AS cur_next_diff
+FROM products
+         INNER JOIN product_groups USING (group_id);
+
+
 ```
